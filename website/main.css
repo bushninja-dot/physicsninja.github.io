@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+:root {
+  --accent: #4dd0e1;
+  --accent-light: #80deea;
+  --bg-space: radial-gradient(circle at 50% 20%, #111827 0%, #000 100%);
+}
+
+body {
+  background: var(--bg-space);
+  color: #e0e0e0;
+  font-family: 'Inter', sans-serif;
+  scroll-behavior: smooth;
+}
+
+/* Utility classes */
+.bg-space { background: var(--bg-space); }
+.font-inter { font-family: 'Inter', sans-serif; }
+
+/* Sections */
+.section {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 6rem 2rem;
+  text-align: center;
+}
+
+.section-title {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  font-weight: 400;
+  letter-spacing: 1px;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+/* Buttons */
+.btn-primary, .btn-outline {
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #111;
+}
+.btn-primary:hover {
+  background: var(--accent-light);
+}
+.btn-outline {
+  border: 2px solid var(--accent);
+  color: var(--accent);
+}
+.btn-outline:hover {
+  background: var(--accent);
+  color: #111;
+}
+
+/* Cards */
+.card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  text-align: left;
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+.card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* MathJax / KaTeX tweak */
+mjx-container {
+  font-size: 1.1em;
+}
+
+/* Subtle animation */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0px); }
+}
+section:first-of-type h1 {
+  animation: float 6s ease-in-out infinite;
+}
