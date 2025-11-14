@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spinors & SU(2) - Mathematical Foundations</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        .math-section {
+            background: #f9f9f9;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #007acc;
+            border-radius: 4px;
+        }
+        .definition {
+            background: #e8f4f8;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .interactive {
+            background: #fff3cd;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Spinors & SU(2): The Mathematics of Quantum Spin</h1>
+
+    <div class="math-section">
+        <h2>Tangent Half-Angle in Vector Addition</h2>
+        <p>The tangent half-angle substitution appears naturally when composing rotations:</p>
+        
+        <div class="definition">
+            <strong>Tangent Half-Angle Identity:</strong><br>
+            \[t = \tan\left(\frac{\theta}{2}\right) = \frac{\sin\theta}{1 + \cos\theta}\]
+        </div>
+
+        <p>For rotation composition:</p>
+        \[
+        \tan\left(\frac{\theta_1 + \theta_2}{2}\right) = \frac{\tan(\theta_1/2) + \tan(\theta_2/2)}{1 - \tan(\theta_1/2)\tan(\theta_2/2)}
+        \]
+    </div>
+
+    <div class="math-section">
+        <h2>SU(2) and Spinor Mechanism</h2>
+        
+        <div class="definition">
+            <strong>SU(2) Group:</strong><br>
+            \[
+            SU(2) = \left\{ \begin{pmatrix} \alpha & -\bar{\beta} \\ \beta & \bar{\alpha} \end{pmatrix} : |\alpha|^2 + |\beta|^2 = 1 \right\}
+            \]
+        </div>
+
+        <h3>Spinor Representation</h3>
+        <p>A spinor is a two-component complex vector:</p>
+        \[
+        \xi = \begin{pmatrix} \xi_1 \\ \xi_2 \end{pmatrix}
+        \]
+
+        <p>Under SU(2) transformation:</p>
+        \[
+        \xi \mapsto U\xi, \quad U \in SU(2)
+        \]
+    </div>
+
+    <div class="math-section">
+        <h2>Möbius Transformation Connection</h2>
+        
+        <p>The stereographic projection to Riemann sphere:</p>
+        \[
+        z = \frac{\xi_1}{\xi_2} \mapsto \frac{az + b}{cz + d}
+        \]
+
+        <div class="definition">
+            <strong>Complex Conjugate Pairing:</strong><br>
+            For spinor \(\xi = \begin{pmatrix} \xi_1 \\ \xi_2 \end{pmatrix}\), the conjugate spinor is:<br>
+            \[
+            \eta = \begin{pmatrix} -\bar{\xi_2} \\ \bar{\xi_1} \end{pmatrix}
+            \]
+        </div>
+    </div>
+
+    <div class="math-section">
+        <h2>Rotation with Half-Angles</h2>
+        
+        <p>A rotation by angle \(\theta\) around axis \(\mathbf{n}\):</p>
+        \[
+        U = \exp\left(-i\frac{\theta}{2} \mathbf{n} \cdot \boldsymbol{\sigma}\right) = \cos\left(\frac{\theta}{2}\right)I - i\sin\left(\frac{\theta}{2}\right)\mathbf{n} \cdot \boldsymbol{\sigma}
+        \]
+
+        <p>Eigenvalues: \(e^{\pm i\theta/2}\)</p>
+
+        <div class="definition">
+            <strong>Pauli Matrices:</strong><br>
+            \[
+            \sigma_x = \begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix}, \quad
+            \sigma_y = \begin{pmatrix} 0 & -i \\ i & 0 \end{pmatrix}, \quad
+            \sigma_z = \begin{pmatrix} 1 & 0 \\ 0 & -1 \end{pmatrix}
+            \]
+        </div>
+    </div>
+
+    <div class="interactive">
+        <h3>Key Insights</h3>
+        <ul>
+            <li>SU(2) provides a <strong>double cover</strong> of SO(3)</li>
+            <li>360° rotation gives a minus sign: \(|\psi\rangle \mapsto -|\psi\rangle\)</li>
+            <li>Half-angles appear because spin-1/2 particles need 720° to return to initial state</li>
+            <li>Möbius transformations describe how spin directions change under rotation</li>
+        </ul>
+    </div>
+
+    <div class="math-section">
+        <h2>Physical Interpretation</h2>
+        
+        <p>The two-component structure encodes quantum probability amplitudes:</p>
+        \[
+        |\psi\rangle = \alpha|\uparrow\rangle + \beta|\downarrow\rangle, \quad |\alpha|^2 + |\beta|^2 = 1
+        \]
+
+        <p>Complex phases \(e^{\pm i\theta/2}\) generate interference patterns through Born's rule.</p>
+    </div>
+
+    <script>
+        // Additional JavaScript for interactivity can be added here
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+</body>
+</html>
