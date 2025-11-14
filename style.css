@@ -1,0 +1,25 @@
+/* Additional styling for better presentation */
+.math-display {
+    overflow-x: auto;
+    padding: 10px 0;
+}
+
+.quantum-diagram {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.nav-bar {
+    background: #2c3e50;
+    padding: 15px;
+    margin-bottom: 30px;
+}
+
+.nav-bar a {
+    color: white;
+    text-decoration: none;
+    margin: 0 15px;
+}
