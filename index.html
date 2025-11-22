@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stereographic Doppler Geometry</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            overflow: hidden;
+        }
+        #container {
+            display: flex;
+            height: 100vh;
+        }
+        #canvas {
+            flex: 1;
+            cursor: grab;
+        }
+        #canvas:active {
+            cursor: grabbing;
+        }
+        #controls {
+            width: 300px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 1.5em;
+        }
+        .control-group {
+            margin: 20px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+        .value-display {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        pre {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.85em;
+            overflow-x: auto;
+        }
+        #info-box {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="canvas"></div>
+        <div id="controls">
+            <h1>Stereographic Doppler Sphere</h1>
+            
+            <div class="control-group">
+                <label>v/c Ratio: <span id="vc-value" class="value-display">0.3</span></label>
+                <input type="range" id="vc-slider" min="0" max="0.9" step="0.01" value="0.3">
+            </div>
+            
+            <div class="control-group">
+                <label>Angle 1: <span id="theta1-value" class="value-display">36.87°</span></label>
+                <input type="range" id="theta1-slider" min="5" max="85" step="0.1" value="36.87">
+            </div>
+            
+            <div class="control-group">
+                <label>Angle 2: <span id="theta2-value" class="value-display">43.60°</span></label>
+                <input type="range" id="theta2-slider" min="5" max="85" step="0.1" value="43.60">
+            </div>
+            
+            <div class="control-group">
+                <label>
+                    <input type="checkbox" id="show-projection" checked> Show Projection Plane
+                </label>
+                <label>
+                    <input type="checkbox" id="show-small-circle" checked> Show Small Circle
+                </label>
+                <label>
+                    <input type="checkbox" id="show-recurrence" checked> Show Recurrence Points
+                </label>
+            </div>
+            
+            <h2>Half-Angle Relationship</h2>
+            <pre id="angle-info">
+Inscribed Angle: <span id="inscribed-angle">21.87°</span>
+Central Angle: <span id="central-angle">43.60°</span>
+Central = 2 × Inscribed: <span id="check-true">✓ TRUE</span>
+            </pre>
+            
+            <h2>Recurrence Values</h2>
+            <pre id="recurrence-info">
+P = r₁ + r₂: <span id="coeff-p">1.42∠40.23°</span>
+Q = r₁ × r₂: <span id="coeff-q">1.00∠80.46°</span>
+β (v/c): <span id="beta-calc">0.30</span>
+            </pre>
+        </div>
+    </div>
+    
+    <div id="info-box">
+        Drag to rotate sphere | Scroll to zoom | Red lines: great circles | Blue: projected circles
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Global variables
+        let scene, camera, renderer, sphere, projectionPlane;
+        let lines3D = [], projectedCircles = [], smallCircle = null;
+        let recurrencePoints = [];
+        let rotation = { x: 0.2, y: 0.3 };
+        let mouseDown = false, mouseX = 0, mouseY = 0;
+        
+        // Parameters
+        let params = {
+            v_c: 0.3,
+            theta1: Math.atan(3/4),
+            theta2: Math.atan(20/21),
+            showProjection: true,
+            showSmallCircle: true,
+            showRecurrence: true
+        };
+        
+        // Initialize Three.js
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1e3c72);
+            
+            const container = document.getElementById('canvas');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.set(0, 0, 5);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
+            
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.4);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
+            
+            // Create sphere (stereographic source)
+            const sphereGeom = new THREE.SphereGeometry(1, 64, 64);
+            const sphereMat = new THREE.MeshBasicMaterial({
+                color: 0x2a5298,
+                transparent: true,
+                opacity: 0.2,
+                wireframe: true
+            });
+            sphere = new THREE.Mesh(sphereGeom, sphereMat);
+            scene.add(sphere);
+            
+            // Projection plane (z = -1)
+            const planeGeom = new THREE.PlaneGeometry(4, 4);
+            const planeMat = new THREE.MeshBasicMaterial({
+                color: 0x4CAF50,
+                transparent: true,
+                opacity: 0.1,
+                side: THREE.DoubleSide
+            });
+            projectionPlane = new THREE.Mesh(planeGeom, planeMat);
+            projectionPlane.position.z = -1;
+            scene.add(projectionPlane);
+            
+            // Controls
+            setupControls();
+            setupEventListeners();
+            updateVisualization();
+            
+            animate();
+        }
+        
+        function setupControls() {
+            document.getElementById('vc-slider').addEventListener('input', (e) => {
+                params.v_c = parseFloat(e.target.value);
+                document.getElementById('vc-value').textContent = params.v_c.toFixed(2);
+                updateVisualization();
+            });
+            
+            document.getElementById('theta1-slider').addEventListener('input', (e) => {
+                params.theta1 = parseFloat(e.target.value) * Math.PI / 180;
+                document.getElementById('theta1-value').textContent = (parseFloat(e.target.value)).toFixed(1) + '°';
+                updateVisualization();
+            });
+            
+            document.getElementById('theta2-slider').addEventListener('input', (e) => {
+                params.theta2 = parseFloat(e.target.value) * Math.PI / 180;
+                document.getElementById('theta2-value').textContent = (parseFloat(e.target.value)).toFixed(1) + '°';
+                updateVisualization();
+            });
+            
+            document.getElementById('show-projection').addEventListener('change', (e) => {
+                params.showProjection = e.target.checked;
+                projectionPlane.visible = params.showProjection;
+            });
+            
+            document.getElementById('show-small-circle').addEventListener('change', (e) => {
+                params.showSmallCircle = e.target.checked;
+                if (smallCircle) smallCircle.visible = params.showSmallCircle;
+            });
+            
+            document.getElementById('show-recurrence').addEventListener('change', (e) => {
+                params.showRecurrence = e.target.checked;
+                recurrencePoints.forEach(p => p.visible = params.showRecurrence);
+            });
+        }
+        
+        function setupEventListeners() {
+            const canvas = renderer.domElement;
+            
+            canvas.addEventListener('mousedown', (e) => {
+                mouseDown = true;
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+            
+            canvas.addEventListener('mousemove', (e) => {
+                if (!mouseDown) return;
+                
+                const deltaX = e.clientX - mouseX;
+                const deltaY = e.clientY - mouseY;
+                
+                rotation.y += deltaX * 0.01;
+                rotation.x += deltaY * 0.01;
+                
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+            
+            canvas.addEventListener('mouseup', () => {
+                mouseDown = false;
+            });
+            
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                camera.position.z += e.deltaY * 0.01;
+                camera.position.z = Math.max(2, Math.min(10, camera.position.z));
+            });
+        }
+        
+        function stereographicProject(point3D) {
+            // Project from sphere (x,y,z) to plane z = -1
+            const x = point3D.x;
+            const y = point3D.y;
+            const z = point3D.z;
+            
+            const denom = 1 - z;
+            return new THREE.Vector3(x / denom, y / denom, -1);
+        }
+        
+        function updateVisualization() {
+            // Clear old objects
+            lines3D.forEach(l => scene.remove(l));
+            projectedCircles.forEach(c => scene.remove(c));
+            recurrencePoints.forEach(p => scene.remove(p));
+            if (smallCircle) scene.remove(smallCircle);
+            
+            lines3D = [];
+            projectedCircles = [];
+            recurrencePoints = [];
+            
+            // Calculate stereographic coordinates
+            const r1 = 1 * Math.cos(params.theta1);
+            const z1 = 1 * Math.sin(params.theta1);
+            const r2 = 1 * Math.cos(params.theta2);
+            const z2 = 1 * Math.sin(params.theta2);
+            
+            // Create 3D points on sphere
+            const p1_3D = new THREE.Vector3(r1, 0, z1);
+            const p2_3D = new THREE.Vector3(r2, 0, z2);
+            const p1_proj = stereographicProject(p1_3D);
+            const p2_proj = stereographicProject(p2_3D);
+            
+            // Great circle (line through pole)
+            const lineGeom = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(0, 0, 1),
+                p1_3D,
+                new THREE.Vector3(0, 0, 1),
+                p2_3D
+            ]);
+            const lineMat = new THREE.LineBasicMaterial({ color: 0xff4444, linewidth: 2 });
+            const line = new THREE.LineSegments(lineGeom, lineMat);
+            scene.add(line);
+            lines3D.push(line);
+            
+            // Projected great circle (straight line)
+            const projLineGeom = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(-3, -1, -1),
+                new THREE.Vector3(3, -1, -1)
+            ]);
+            const projLineMat = new THREE.LineBasicMaterial({ color: 0x4444ff, linewidth: 2 });
+            const projLine = new THREE.Line(projLineGeom, projLineMat);
+            scene.add(projLine);
+            projectedCircles.push(projLine);
+            
+            // Small circle (inversion)
+            const beta = params.v_c;
+            const d = 1 * Math.cos((params.theta2 - params.theta1) / 2);
+            const smallRadius = 1 * Math.sin((params.theta2 - params.theta1) / 2);
+            
+            const smallCircleGeom = new THREE.CircleGeometry(smallRadius, 64);
+            const smallCircleMat = new THREE.MeshBasicMaterial({
+                color: 0xFFEB3B,
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.DoubleSide
+            });
+            smallCircle = new THREE.Mesh(smallCircleGeom, smallCircleMat);
+            smallCircle.position.set(d, 0, -1);
+            smallCircle.visible = params.showSmallCircle;
+            scene.add(smallCircle);
+            
+            // Recurrence points (complex iteration)
+            if (params.showRecurrence) {
+                const P = (r1 * cMath.exp(1j * params.theta1)) + (r2 * cMath.exp(1j * params.theta2));
+                const Q = (r1 * cMath.exp(1j * params.theta1)) * (r2 * cMath.exp(1j * params.theta2));
+                
+                // Generate 10 recurrence points
+                let a_prev = 1;
+                let a_curr = P;
+                
+                for (let i = 0; i < 10; i++) {
+                    const ratio = a_curr / a_prev;
+                    const x = ratio.real;
+                    const y = ratio.imag;
+                    
+                    const pointGeom = new THREE.SphereGeometry(0.05, 16, 16);
+                    const pointMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                    const point = new THREE.Mesh(pointGeom, pointMat);
+                    point.position.set(x, y, -1);
+                    point.visible = params.showRecurrence;
+                    scene.add(point);
+                    recurrencePoints.push(point);
+                    
+                    const next = P * a_curr - Q * a_prev;
+                    a_prev = a_curr;
+                    a_curr = next;
+                }
+            }
+            
+            // Update info
+            const inscribedAngle = Math.abs(params.theta2 - params.theta1) * 180 / Math.PI / 2;
+            const centralAngle = Math.abs(params.theta2 - params.theta1) * 180 / Math.PI;
+            document.getElementById('inscribed-angle').textContent = inscribedAngle.toFixed(1) + '°';
+            document.getElementById('central-angle').textContent = centralAngle.toFixed(1) + '°';
+            document.getElementById('check-true').textContent = 
+                Math.abs(centralAngle - 2 * inscribedAngle) < 0.1 ? '✓ TRUE' : '✗ FALSE';
+            
+            document.getElementById('coeff-p').textContent = P.toFixed(3);
+            document.getElementById('coeff-q').textContent = Q.toFixed(3);
+            document.getElementById('beta-calc').textContent = beta.toFixed(3);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Apply rotation
+            sphere.rotation.x = rotation.x;
+            sphere.rotation.y = rotation.y;
+            projectionPlane.rotation.copy(sphere.rotation);
+            lines3D.forEach(l => l.rotation.copy(sphere.rotation));
+            projectedCircles.forEach(c => c.rotation.copy(sphere.rotation));
+            if (smallCircle) smallCircle.rotation.copy(sphere.rotation);
+            recurrencePoints.forEach(p => p.rotation.copy(sphere.rotation));
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Mini complex math library
+        const cMath = {
+            exp: (z) => ({ real: Math.cos(z), imag: Math.sin(z) }),
+            tan: (z) => Math.tan(z)
+        };
+        
+        // Initialize
+        window.addEventListener('resize', () => {
+            const container = document.getElementById('canvas');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+        
+        init();
+    </script>
+</body>
+</html>
